@@ -1,12 +1,15 @@
-package routers
+package router
 
 import (
-	"FileStorageServer/meta"
+	"FileStorageServer/model"
+	"FileStorageServer/service"
 	"FileStorageServer/utils"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"path"
+	"time"
 )
 
 //FileUpload FileUpload
@@ -30,7 +33,11 @@ func FileUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	wFile, err := os.OpenFile(fmt.Sprintf("./FileDir/%s", fh.Filename), os.O_CREATE|os.O_RDWR, 0666)
+	ext := path.Ext(fh.Filename)
+
+	saveFileName := fmt.Sprintf("%d.%s", time.Now().Unix(), ext)
+
+	wFile, err := os.OpenFile(fmt.Sprintf("./FileDir/%s", saveFileName), os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
 		serveJSON(w, resultMap{
 			"status": 0,
@@ -50,7 +57,17 @@ func FileUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileMeta := &meta.FileMeta{FileSha1: utils.GetSha1(file), FileSize: fh.Size}
+	fileMeta := &model.FileMetaModel{FileSha1: utils.GetSha1(file), FileSize: fh.Size, FileName: saveFileName}
+
+	err = service.CreateFileMeta(fileMeta)
+
+	if err != nil {
+		serveJSON(w, resultMap{
+			"status": 0,
+			"msg":    err.Error(),
+		})
+		return
+	}
 
 	serveJSON(w, resultMap{
 		"status": 1,

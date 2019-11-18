@@ -2,3 +2,5 @@
 .vscode/
 #build product
 build/
+#FileDir
+FileDir/

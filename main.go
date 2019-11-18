@@ -2,7 +2,7 @@ package main
 
 import (
 	"FileStorageServer/db"
-	"FileStorageServer/routers"
+	"FileStorageServer/router"
 	"fmt"
 	"net/http"
 )
@@ -17,8 +17,11 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/fileUpload", routers.FileUpload)
-	mux.HandleFunc("/", routers.Index)
+	mux.HandleFunc("/fileUpload", router.FileUpload)
+	mux.HandleFunc("/", router.TokenInterceptor(router.Index))
+
+	mux.HandleFunc("/user/signup", router.SignUp)
+	mux.HandleFunc("/user/loginin", router.LoginIn)
 
 	server := http.Server{Addr: ":8080", Handler: mux}
 
