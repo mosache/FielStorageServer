@@ -23,6 +23,11 @@ func main() {
 	mux.HandleFunc("/user/signup", router.SignUp)
 	mux.HandleFunc("/user/loginin", router.LoginIn)
 
+	//分块上传
+	mux.HandleFunc("/file/mpupload/init", router.TokenInterceptor(router.MutipartUpLoadInitalization))
+	mux.HandleFunc("/file/mpupload/part", router.TokenInterceptor(router.UploadPart))
+	mux.HandleFunc("/file/mpupload/complete", router.TokenInterceptor(router.CompleteUpload))
+
 	server := http.Server{Addr: ":8080", Handler: mux}
 
 	fmt.Println("server on :8080")
