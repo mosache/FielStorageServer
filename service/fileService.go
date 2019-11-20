@@ -1,31 +1,41 @@
 package service
 
 import (
+	"FileStorageServer/dao"
 	"FileStorageServer/db"
 	"FileStorageServer/model"
-	"errors"
+	"database/sql"
 )
 
 //CreateFileMeta CreateFileMeta
-func CreateFileMeta(fm *model.FileMetaModel) (err error) {
-	stmt, err := db.Db.Prepare("insert into file_meta (FileSha1,FileSize) values (?,?)")
+func CreateFileMeta(fm *model.FileMeta, uf *model.UserFile) (err error) {
+	var (
+		tx *sql.Tx
+	)
+	tx, err = db.Db.Begin()
 	if err != nil {
-		return
-	}
-	defer stmt.Close()
-
-	re, err := stmt.Exec(fm.FileSha1, fm.FileSize)
-
-	if err != nil {
+		tx.Rollback()
 		return
 	}
 
-	if rows, mErr := re.RowsAffected(); mErr == nil {
-		if rows <= 0 {
-			err = errors.New("insert into db affected zero row")
-			return
-		}
+	//插入文件元信息
+	err = dao.InsertFileMeta(tx, fm)
+
+	if err != nil {
+		tx.Rollback()
+		return
 	}
+
+	//插入用户文件表
+
+	err = dao.InsertUserFile(tx, uf)
+
+	if err != nil {
+		tx.Rollback()
+		return
+	}
+
+	err = tx.Commit()
 
 	return
 }

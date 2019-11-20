@@ -6,9 +6,9 @@ import "time"
 type UserFile struct {
 	BaseModel
 
-	UserID     int64
+	UserID     int
 	FileHash   string
-	FileSize   int64
+	FileSize   int
 	FileName   string
 	UploadAt   time.Time
 	LastUpdate time.Time

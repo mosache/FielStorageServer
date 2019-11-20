@@ -2,6 +2,7 @@ package router
 
 import (
 	"FileStorageServer/model"
+	"FileStorageServer/router/dto"
 	"FileStorageServer/service"
 	"FileStorageServer/utils"
 	"fmt"
@@ -14,7 +15,7 @@ import (
 
 //FileUpload FileUpload
 func FileUpload(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+	err := r.ParseMultipartForm(1024 * 1024)
 	if err != nil {
 		serveJSON(w, resultMap{
 			"status": 0,
@@ -22,6 +23,8 @@ func FileUpload(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+
+	token := r.FormValue("token")
 
 	file, fh, err := r.FormFile("file")
 	if err != nil {
@@ -35,7 +38,7 @@ func FileUpload(w http.ResponseWriter, r *http.Request) {
 
 	ext := path.Ext(fh.Filename)
 
-	saveFileName := fmt.Sprintf("%d.%s", time.Now().Unix(), ext)
+	saveFileName := fmt.Sprintf("%d%s", time.Now().Unix(), ext)
 
 	wFile, err := os.OpenFile(fmt.Sprintf("./FileDir/%s", saveFileName), os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
@@ -57,9 +60,23 @@ func FileUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileMeta := &model.FileMetaModel{FileSha1: utils.GetSha1(file), FileSize: fh.Size, FileName: saveFileName}
+	td, err := utils.CheckToken(token)
 
-	err = service.CreateFileMeta(fileMeta)
+	if err != nil {
+		serveJSON(w, resultMap{
+			"status": 0,
+			"msg":    err.Error(),
+		})
+		return
+	}
+
+	tokenData := td.(*utils.TokenData)
+
+	fileMeta := &model.FileMeta{FileSha1: utils.GetSha1(file), FileSize: int(fh.Size), FileName: saveFileName}
+
+	userFile := &model.UserFile{UserID: tokenData.UserID, FileHash: fileMeta.FileSha1, FileSize: int(fh.Size), FileName: saveFileName}
+
+	err = service.CreateFileMeta(fileMeta, userFile)
 
 	if err != nil {
 		serveJSON(w, resultMap{
@@ -72,6 +89,6 @@ func FileUpload(w http.ResponseWriter, r *http.Request) {
 	serveJSON(w, resultMap{
 		"status": 1,
 		"msg":    "success",
-		"data":   fileMeta,
+		"data":   dto.FileMetaDTO{FileName: saveFileName, FileHash: fileMeta.FileSha1, FileSize: int(fh.Size)},
 	})
 }

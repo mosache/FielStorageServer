@@ -2,7 +2,9 @@ package router
 
 import (
 	"FileStorageServer/model"
+	"FileStorageServer/router/dto"
 	"FileStorageServer/service"
+	"FileStorageServer/utils"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -66,9 +68,12 @@ func LoginIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userDTO := dto.NewUserDTO(user)
+	userDTO.Token = utils.GetNewToken(userDTO.UserID)
+
 	serveJSON(w, resultMap{
 		"status": 1,
-		"data":   user,
+		"data":   userDTO,
 	})
 
 }

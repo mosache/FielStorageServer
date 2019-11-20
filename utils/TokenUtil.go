@@ -14,12 +14,12 @@ const (
 
 //TokenData TokenData
 type TokenData struct {
-	UserID int64
+	UserID int
 	jwt.StandardClaims
 }
 
 //GetNewToken GetNewToken
-func GetNewToken(userID int64) string {
+func GetNewToken(userID int) string {
 	//根据生成时间，使每次生成的token都不一样
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, &TokenData{UserID: userID, StandardClaims: jwt.StandardClaims{
 		IssuedAt: time.Now().Unix(),
